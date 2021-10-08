@@ -27,13 +27,15 @@ unsafe fn stack_range() -> (usize, usize) {
 
 #[no_mangle]
 pub fn main() -> i32 {
-    assert_eq!(
-        write(STDOUT, unsafe {
-            #[allow(clippy::zero_ptr)]
-            slice::from_raw_parts(0x0 as *const _, 10)
-        }),
-        -1
-    );
+    // println!("start");
+    // assert_eq!(
+    //     write(STDOUT, unsafe {
+    //         #[allow(clippy::zero_ptr)]
+    //         slice::from_raw_parts(0x0 as *const _, 10)
+    //     }),
+    //     -1
+    // );
+    println!("start2");
     let (bottom, top) = unsafe { stack_range() };
     assert_eq!(
         write(STDOUT, unsafe {

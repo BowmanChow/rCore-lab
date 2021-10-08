@@ -16,19 +16,23 @@ unsafe fn stack_range() -> (usize, usize) {
 }
 
 pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
+    println!("begin to sys_write");
     match fd {
         FD_STDOUT => {
             // let (botton, top) = unsafe { stack_range() };
             // if (buf as usize) < botton || (buf as usize + len) > top {
             //     return -1;
             // }
+            println!("1");
             let slice = unsafe { core::slice::from_raw_parts(buf, len) };
             let str = core::str::from_utf8(slice).unwrap();
+            println!("2");
             print!("{}", str);
             len as isize
         }
         _ => {
-            panic!("Unsupported fd in sys_write!");
+            // panic!("Unsupported fd in sys_write!");
+            return -1;
         }
     }
 }
