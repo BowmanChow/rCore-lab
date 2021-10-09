@@ -30,6 +30,8 @@ lazy_static! {
         let mut tasks = [TaskControlBlock {
             task_cx: TaskContext::zero_init(),
             task_status: TaskStatus::UnInit,
+            stride: 0,
+            priority: 16,
         }; MAX_APP_NUM];
         for (i, t) in tasks.iter_mut().enumerate().take(num_app) {
             t.task_cx = TaskContext::goto_restore(init_app_cx(i));
@@ -47,14 +49,21 @@ lazy_static! {
     };
 }
 
+const BIG_STRIDE: usize = 0xFFFFF;
+
 impl TaskManager {
     pub fn get_current_task(&self) -> usize {
         self.inner.exclusive_access().current_task
+    }
+    pub fn set_priority(&self, task_id: usize, priority: usize) -> usize {
+        self.inner.exclusive_access().tasks[task_id].priority = priority;
+        priority
     }
     fn run_first_task(&self) -> ! {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
         task0.task_status = TaskStatus::Running;
+        task0.stride += BIG_STRIDE / task0.priority;
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
         drop(inner);
         let mut _unused = TaskContext::zero_init();
@@ -80,9 +89,18 @@ impl TaskManager {
     fn find_next_task(&self) -> Option<usize> {
         let inner = self.inner.exclusive_access();
         let current = inner.current_task;
-        (current + 1..current + self.num_app + 1)
-            .map(|id| id % self.num_app)
-            .find(|id| inner.tasks[*id].task_status == TaskStatus::Ready)
+        let mut min_stride: usize = 0xFFFFFFFF;
+        let mut min_stride_task: usize = 0;
+        for i in 0..self.num_app {
+            if i == current || inner.tasks[i].task_status != TaskStatus::Ready {
+                continue;
+            }
+            if inner.tasks[i].stride < min_stride {
+                min_stride = inner.tasks[i].stride;
+                min_stride_task = i;
+            }
+        }
+        Some(min_stride_task)
     }
 
     fn run_next_task(&self) {
@@ -90,6 +108,7 @@ impl TaskManager {
             let mut inner = self.inner.exclusive_access();
             let current = inner.current_task;
             inner.tasks[next].task_status = TaskStatus::Running;
+            inner.tasks[next].stride += BIG_STRIDE / inner.tasks[next].priority;
             inner.current_task = next;
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_task_cx_ptr = &inner.tasks[next].task_cx as *const TaskContext;
