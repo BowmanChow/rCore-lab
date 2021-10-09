@@ -9,24 +9,41 @@ unsafe fn r_sp() -> usize {
     sp
 }
 
+// unsafe fn r_data() -> usize {
+//     let mut data: usize;
+//     asm!("la {}, start_data", out(reg) data);
+//     data
+// }
+
 unsafe fn stack_range() -> (usize, usize) {
     let sp = r_sp();
     let top = (sp + STACK_SIZE - 1) & (!(STACK_SIZE - 1));
     (top - STACK_SIZE, top)
 }
 
+pub fn in_range(small: (usize, usize), big: (usize, usize)) -> bool {
+    small.0 >= big.0 && small.1 <= big.1
+}
+
 pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
-    println!("begin to sys_write");
+    // println!("OS :  sys_write");
+    // extern "C" {
+    //     fn start_data();
+    //     fn end_data();
+    // }
     match fd {
         FD_STDOUT => {
             // let (botton, top) = unsafe { stack_range() };
-            // if (buf as usize) < botton || (buf as usize + len) > top {
+            // if !in_range((buf as usize, buf as usize + len), (botton, top))
+            //     || !in_range((buf as usize, buf as usize + len), (start_data as usize, end_data as usize))
+            // {
             //     return -1;
             // }
-            println!("1");
+            // println!("data : {}", unsafe { r_data() });
+            // println!("1");
             let slice = unsafe { core::slice::from_raw_parts(buf, len) };
             let str = core::str::from_utf8(slice).unwrap();
-            println!("2");
+            // println!("2");
             print!("{}", str);
             len as isize
         }

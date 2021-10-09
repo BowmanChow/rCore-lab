@@ -32,5 +32,10 @@ pub fn sys_get_time(ts: *mut TimeVal, _tz: usize) -> isize {
 
 // YOUR JOB: 实现 Stride 调度算法和 sys_set_priority
 pub fn sys_set_priority(_prio: isize) -> isize {
-    -1
+    if _prio <= 1 {
+        -1
+    }
+    else {
+        _prio
+    }
 }
