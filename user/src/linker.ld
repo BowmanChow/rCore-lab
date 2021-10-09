@@ -15,10 +15,8 @@ SECTIONS
         *(.srodata .srodata.*)
     }
     .data : {
-        start_data = .;
         *(.data .data.*)
         *(.sdata .sdata.*)
-        end_data = .;
     }
     .bss : {
         start_bss = .;

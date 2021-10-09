@@ -44,6 +44,13 @@ fn get_base_i(app_id: usize) -> usize {
     APP_BASE_ADDRESS + app_id * APP_SIZE_LIMIT
 }
 
+pub fn get_address_range(app_id: usize) -> (usize, usize) {
+    (
+        APP_BASE_ADDRESS + app_id * APP_SIZE_LIMIT,
+        APP_BASE_ADDRESS + (app_id + 1) * APP_SIZE_LIMIT,
+    )
+}
+
 pub fn get_num_app() -> usize {
     extern "C" {
         fn _num_app();

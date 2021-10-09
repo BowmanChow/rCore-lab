@@ -3,6 +3,8 @@ mod switch;
 #[allow(clippy::module_inception)]
 mod task;
 
+use core::borrow::{Borrow, BorrowMut};
+
 use crate::config::MAX_APP_NUM;
 use crate::loader::{get_num_app, init_app_cx};
 use crate::sync::UPSafeCell;
@@ -46,6 +48,9 @@ lazy_static! {
 }
 
 impl TaskManager {
+    pub fn get_current_task(&self) -> usize {
+        self.inner.exclusive_access().current_task
+    }
     fn run_first_task(&self) -> ! {
         let mut inner = self.inner.exclusive_access();
         let task0 = &mut inner.tasks[0];
