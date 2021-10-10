@@ -1,9 +1,30 @@
+# OS 实验 lab1 报告
+
+无83
+
+周君宝
+
+2018011106
+
 ## 我做了啥
 
 ### 1.  sys_write
 
-首先观察 `user/src/bin/test1_write0.rs`。
+首先观察 `user/src/bin/test1_write0.rs`。 发现里面限制了函数调用栈的大小是 `0x1000`。 
 
+然后修改 `os/src/syscall/fs.rs` 。 在进入 `sys_write` 之后判断一下地址是不是在函数调用栈之外。
+
+因为有些数据可能在程序的 `.data` 或 `.bss` 段里， 所以在判断地址范围时应该把这个也考虑进来。
+
+修改 `os/src/task/mod.rs` 里面的 `TaskManager` ，添加 `get_current_task()` 函数。 然后在 `os/src/syscall/fs.rs` 里 `use crate::task::TASK_MANAGER;` 。 这样在调用 `sys_write` 时可以获得当前进程的地址空间。 最后综合以上两点做判断， 就能判断程序调用的地址是否为该程序的合法地址。
+
+### 2. sys_set_priority
+
+修改 `os/src/task/task.rs` ， 给 `TaskControlBlock` 添加 `priority` 字段， 然后在 `sys_set_priority` 调用时判断一下 `priority` 的范围。 然后写入 `TASK_MANAGER.inner.tasks` 的 `priority` 。
+
+### 3. stride
+
+给 `TaskControlBlock` 添加 `stride` 字段。 修改 `TaskManager` 里面的 `run_first_task` 和 `find_next_task` 。 运行一个进程之后修改其 `stride` 。 `find_next_task` 里面搜索所有进程的 `stride` ， 选择最小的执行。
 
 ## 1. 
 
@@ -154,7 +175,21 @@ struct Stride(u64);
 
 impl PartialOrd for Stride {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        // ...
+        if (self as * const _ as isize - other as * const _ isize).abs() <=
+   			(BIG_STRIDE as isize) / 2 {
+            	if self > other {
+   					Some(Ordering::Greater)
+   				} else {
+   					Some(Ordering::Less)
+   				}
+   		} else {
+   			if self > other {
+   				Some(Ordering::Less)
+   			} 
+           	else {
+   				Some(Ordering::Greater)
+   			}
+   		}
     }
 }
 
